@@ -1,0 +1,19 @@
+# Ignore Python cache and compiled files
+__pycache__/
+*.pyc
+
+# Ignore virtual environments
+.venv/
+
+# Ignore build artifacts
+build/
+*.egg-info/
+
+# Ignore logs and temp files
+*.log
+*.tmp
+*.cfg
+
+# Ignore token store or sensitive files
+TokenStore/
+.env
