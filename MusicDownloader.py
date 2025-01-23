@@ -33,6 +33,7 @@ class MusicDownloader:
             self.get_spotify_access_token()
         if not self.spotify_token:
             return None 
+        edit = False
         print("\rFetching track list from Spotify...")
         self.spinner.start()
         url = "https://api.spotify.com/v1/search"
@@ -57,14 +58,25 @@ class MusicDownloader:
 
             while True:
                 try:
-                    choice = int(input("Select a track (1-10): "))
+                    user_input = input("Select a track (1-10): ").split()
+                    if len(user_input) == 1:
+                        choice = int(user_input[0])
+                        want_edit = None
+                    elif len(user_input) == 2:
+                        choice, want_edit = int(user_input[0]), user_input[1]
+                    else:
+                        print("Invalid input. Please enter a number (1-10) and optionally 'e' to edit title of metadata.")
+                        continue
                     if 1 <= choice <= len(tracks):
                         selected_track = tracks[choice - 1]
-                        break
+                        if want_edit and want_edit.lower() == 'e':
+                            edit = True
+                        break  
                     else:
                         print("Please choose a valid option between 1 and 10.")
                 except ValueError:
-                    print("Invalid input. Please enter a number between 1 and 10.")
+                    print("Invalid input. Please enter a number (1-10) and optionally 'e' to edit.")
+
             print("Fetching metadata for the selected track...")
             self.spinner.start()
             artist_id = selected_track["artists"][0]["id"]
@@ -97,7 +109,7 @@ class MusicDownloader:
                     metadata[key] = re.sub(r'["?]','', value)
             self.spinner.stop()
             print("\rMetadata fetched successfully...")
-            return metadata
+            return metadata,edit
         except Exception as e:
             self.spinner.stop()
             print("\rFailed to fetch song metadata:", e)
@@ -124,16 +136,14 @@ class MusicDownloader:
         if choice == 'y':
             modified_title = input("\rEdit the title : ")
         
-        metadata = self.fetch_song_metadata(modified_title) if modified_title else {}
+        metadata, editable = self.fetch_song_metadata(modified_title) if modified_title else {}
         if not metadata:
             proceed = input("\rProceed without metadata (y/n) : ")
             if proceed == 'n':
                 sys.exit()
-        if len(metadata["title"]) > 50:
+        if (metadata and editable):
             print("\rMetadata's Title : "+metadata["title"])
-            inp = input("\rmetadata's title is too long(>50) will u edit (y/n): ")
-            if inp == 'y':
-                metadata["title"] = input("Edit the title : ")
+            metadata["title"] = input("Edit the title : ")
         cover_image_data = None
         if metadata and 'cover_image_url' in metadata:
             cover_image_data = self.fetch_cover_image(metadata["cover_image_url"])
