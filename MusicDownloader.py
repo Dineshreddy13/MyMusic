@@ -79,7 +79,7 @@ class MusicDownloader:
             cover_image_url = album_images[0]["url"] if album_images else None
 
             metadata = {
-                "title": selected_track["name"].replace('?',''),
+                "title": selected_track["name"],
                 "artist": ", ".join(artist["name"] for artist in selected_track["artists"]),
                 "album": album["name"],
                 "album_artist": album_artists,
@@ -94,7 +94,7 @@ class MusicDownloader:
 
             for key, value in metadata.items():
                 if isinstance(value, str):
-                    metadata[key] = re.sub(r'["?]', '', value)
+                    metadata[key] = re.sub(r'["?]','', value)
             self.spinner.stop()
             print("\rMetadata fetched successfully...")
             return metadata
@@ -104,11 +104,18 @@ class MusicDownloader:
             return None
 
     def downloadAudio(self, url):
+        downnload_source = None
+        if url.startswith("https://music.youtube.com"):
+            downnload_source = "yt-music"
+        elif url.startswith("https://youtu.be"):
+            downnload_source = "youtube"
+        print("Download Source:",downnload_source)
+
         modified_title = None
         print("Fetching Audio Title from YouTube...")
         self.spinner.start()
         with YoutubeDL({'quiet': True}) as ydl:
-            info = ydl.extract_info(url, download=False)  # Get metadata only
+            info = ydl.extract_info(url, download=False) 
             raw_title = info['title']
             modified_title = self.modifyTitle(raw_title)
         self.spinner.stop()
@@ -167,7 +174,6 @@ class MusicDownloader:
         return re.sub(r'[<>:"/\\|?*.]', '_', title)
 
     def _progress_hook(self, d):
-        # Update spinner or show progress
         if d['status'] == 'downloading':
             self.spinner.stop()
             print(f"\rDownloading: {d['_percent_str']} | Speed: {d['_speed_str']}", end="")
@@ -251,10 +257,9 @@ class MusicDownloader:
         try:
             result = subprocess.run(
                 ['ffmpeg', '-i', file_path],
-                stderr=subprocess.PIPE,  # FFmpeg writes details to stderr
+                stderr=subprocess.PIPE, 
                 stdout=subprocess.PIPE,
             )
-            # Decode output safely with 'replace' to handle unknown characters
             output = result.stderr.decode('utf-8', errors='replace')
             audio_properties = {}
 
@@ -318,7 +323,6 @@ class SpotifyTokenManager:
             response = requests.post(url, headers=headers, data=data)
             response.raise_for_status()
             token_info = response.json()
-            # Calculate expiry time: current time + expires_in seconds
             expiry_time = time.time() + token_info['expires_in']
             token_info['expiry_time'] = expiry_time
             print("Token acquired...")
@@ -352,7 +356,7 @@ class Spinner:
     def stop(self):
         self.running = False
         if self.thread:
-            self.thread.join()  # Wait for the thread to finish
+            self.thread.join()  
 
     def _animate(self):
         while self.running:
@@ -364,9 +368,9 @@ class Spinner:
 
 class QuietLogger:
     def debug(self, msg):
-        pass  # Suppress debug messages
+        pass 
     def warning(self, msg):
-        pass  # Suppress warning messages
+        pass 
     def error(self, msg):
         print(msg)
 
