@@ -163,7 +163,7 @@ class MusicDownloader:
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'm4a',  
-                'preferredquality': '128', 
+                'preferredquality': '144', 
             }],
         }
 
